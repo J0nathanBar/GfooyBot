@@ -5,7 +5,6 @@ import re
 from BotConf import TOKEN
 import mongobongo
 import DawnFrager
-from discord import app_commands
 import socket
 
 mongo = mongobongo.BongoMongo()
@@ -26,10 +25,10 @@ def subs(string, sub):
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send("Command not found.")
+        await ctx.reply("Command not found.")
+
     else:
-        # Handle other types of errors
-        print(f'Error: {error}')
+        await ctx.reply(f'Error: {error}')
 
 
 @bot.event
@@ -42,14 +41,35 @@ async def on_ready():
         print(f'Error syncing command: {e}')
 
 
+@bot.event
+async def on_guild_join(guild):
+    for channel in guild.text_channels:
+        if channel.name == 'general' or channel.name == 'general-chat':
+            await display_about(channel)
+            break
+
+
+async def admin_command(ctx):
+    uid = ctx.author.id
+    if mongo.is_admin(uid):
+        return True
+    else:
+        await permission_denied(ctx)
+        return False
+
+
 @bot.command(help='generic info about the bot')
 async def about(ctx):
+    await display_about(ctx.channel)
+
+
+async def display_about(channel):
     bot_name = "Gfooy bot"
-    bot_description = "Was designed to imitate the gfooy experience"
+    bot_description = "Was designed to imitate the gfooy experience use !help or try pinging me to do stuff"
     bot_version = "1.0"
     embed = discord.Embed(title=bot_name, description=bot_description, color=discord.Color.blue())
     embed.add_field(name="Version", value=bot_version)
-    await ctx.send(embed=embed)
+    await channel.send(embed=embed)
 
 
 @bot.command(help='test your iq')
@@ -74,37 +94,28 @@ async def words_of_wisdom(ctx):
     await ctx.send(mongo.get_wisdom())
 
 
-@bot.command(help='adds more custom made replies to the database')
+@bot.command(help='adds more custom made replies to the database, takes a discord id and a reply as arguments')
 async def add_reply(ctx, dest_uid: str, reply: str):
-    uid = ctx.author.id
-    admin = mongo.is_admin(uid)
-    if admin:
+    if await admin_command(ctx):
         if mongo.add_reply(uid=dest_uid, reply=reply):
             await ctx.send('added reply successfully!')
         else:
             await ctx.send('there was an error processing your request!')
-    else:
-        await permission_denied(ctx)
 
 
-@bot.command(help='adds more custom made replies to the database')
+@bot.command(help='adds more custom made replies to the database,takes a discord id and a nickname as arguments')
 async def add_nickname(ctx, dest_uid: str, nickname: str):
-    uid = ctx.author.id
-    admin = mongo.is_admin(uid)
-    if admin:
+    if await admin_command(ctx):
         if mongo.add_nickname(uid=dest_uid, nickname=nickname):
             await ctx.send('added nickname successfully!')
         else:
             await ctx.send('there was an error processing your request!')
-    else:
-        await permission_denied(ctx)
 
 
 @bot.command(help='adds another user to the database')
 async def add_user(ctx):
     try:
-        uid = ctx.author.id
-        if mongo.is_admin(uid):
+        if await admin_command(ctx):
             await ctx.send('name: ')
             name = (await user_input(ctx)).content
             await ctx.send('user id: ')
@@ -123,8 +134,7 @@ async def add_user(ctx):
                 elif res == 'NO':
                     await ctx.reply('operation stopped by user!')
                     break
-        else:
-            await permission_denied(ctx)
+
     except asyncio.TimeoutError:
         await ctx.reply('Timeout: You took too long to respond.')
 
@@ -208,28 +218,23 @@ async def display_user(ctx, user):
     await ctx.send(embed=embed)
 
 
-@bot.command(help='displays user profiles')
+@bot.command(help='displays user profiles, use by !show_user [discord id]')
 async def show_user(ctx, uid):
-    if mongo.is_admin(ctx.author.id):
+    if await admin_command(ctx):
         user = mongo.get_user(uid)
         if user:
             await user_display(ctx, user)
         else:
             await ctx.reply('user doesnt exist')
 
-    else:
-        await permission_denied(ctx)
 
-
-@bot.command(help='show all users')
+@bot.command(help='shows all users')
 async def show_users(ctx):
-    if mongo.is_admin(ctx.author.id):
+    if await admin_command(ctx):
         users = mongo.get_users()
         print(users)
         for user in users:
             await user_display(ctx, user)
-    else:
-        await permission_denied(ctx)
 
 
 async def user_display(ctx, user):
@@ -263,14 +268,7 @@ async def get_ip(ctx):
 @bot.command(name='add_wisdom', help='add a wisdom to the pull of wisdoms. use by !add_wisdom [wisdom]')
 async def add_wisdom(ctx, wisdom):
     if await admin_command(ctx):
-        mongo.add_wisdom(wisdom)
-
-
-async def admin_command(ctx):
-    uid = ctx.author.id
-    admin = mongo.is_admin(uid)
-    if admin:
-        return True
-    else:
-        await permission_denied(ctx)
-        return False
+        if mongo.add_wisdom(wisdom):
+            await ctx.send('Wisdom added successfully!')
+        else:
+            ctx.reply('something went wrong')
