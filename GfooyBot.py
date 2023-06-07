@@ -258,3 +258,19 @@ async def get_ip(ctx):
     ip_name = socket.gethostname()
     ip_addr = socket.gethostbyaddr(ip_name)
     await ctx.send(f'host name: {ip_name} address{ip_addr}')
+
+
+@bot.command(name='add_wisdom', help='add a wisdom to the pull of wisdoms. use by !add_wisdom [wisdom]')
+async def add_wisdom(ctx, wisdom):
+    if await admin_command(ctx):
+        mongo.add_wisdom(wisdom)
+
+
+async def admin_command(ctx):
+    uid = ctx.author.id
+    admin = mongo.is_admin(uid)
+    if admin:
+        return True
+    else:
+        await permission_denied(ctx)
+        return False
