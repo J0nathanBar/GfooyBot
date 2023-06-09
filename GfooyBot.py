@@ -174,38 +174,15 @@ async def on_message(message: discord.Message):
         await on_mentioned(message)
     if subs(upper, 'E'):
         await message.channel.send(upper + 'E')
-    if 'EGG' in upper:
-        await message.channel.send('I like eggy weggy')
     if 'WOMEN' in upper and 'RIGHT' in upper and not is_substring_between(upper, 'WOMEN', 'RIGHT', 'NO'):
         await message.channel.send(
             'it seems you have mentioned women\'s rights without a no in the middle. it seems like a mistake',
             reference=message)
-    if 'HELLO THERE' in upper:
-        await message.channel.send('General Kenobi', reference=message)
-    if 'BUT' in upper:
-        await message.channel.send('he he you said butt', reference=message)
-    if 'COME' in upper:
-        await message.channel.send('he he cum', reference=message)
-    if 'FREE PALESTINE' in upper:
-        await message.channel.send('if palestine is free i\'ll take 2', reference=message)
-    if 'MAYO' in upper:
-        await message.channel.send(
-            "Mayonnaise, the nectar of the gods\nA condiment that's always in high nods\nSmooth and creamy, "
-            "it makes any dish divine\nWith a hint of acidity, it's one of a kind\n\nMayo, Mayo, spread it on "
-            "thick\nA perfect balance, it's the secret trick\nIn a sandwich, salad or fry\nMayo, Mayo, "
-            "we can't deny\n\nEggs and mayo, a match made in heaven\nA classic combo, always in fashion\nTuna salad, "
-            "potato salad, coleslaw too\nMayo is a staple, it's plain to see it's true\n\nMayo, Mayo, spread it on "
-            "thick\nA perfect balance, it's the secret trick\nIn a sandwich, salad or fry\nMayo, Mayo, "
-            "we can't deny\n\nMayo, the king of condiments, no lie\nBringing together, flavors high\nIn every "
-            "kitchen, it's a must\nMayo, Mayo, the nectar of the gods, it's a trust.", reference=message)
-    if 'LIGMA' in upper:
-        await message.channel.send('how bout you ligma balls')
-    if 'CANDICE' in upper:
-        await message.channel.send('candis balls fit in your mouth')
-    if 'KENYA' in upper:
-        await message.channel.send('kenya fit this cock inside your mouth')
-    if 'OUI' in upper:
-        await message.channel.send('bagguette')
+    triggers = mongo.get_triggers()
+    for trigger in triggers:
+        if trigger in upper:
+            reply = mongo.get_trigger_reply(trigger)
+            await message.channel.send(reply, reference=message)
     await bot.process_commands(message)
 
 
@@ -309,3 +286,12 @@ async def was_mentioned(message, user):
         reason = mongo.get_reason(gfooy)
         await message.channel.send(f'{nickname} is {reason} and thus is unavailable',
                                    reference=message)
+
+
+@bot.command(help='adds triggers to the system\nuse by !add_trigger [trigger] [reply]')
+async def add_trigger(ctx, trigger: str, reply: str):
+    if await admin_command(ctx):
+        if mongo.add_trigger(trigger=trigger, reply=reply):
+            await ctx.send('added trigger successfully!')
+        else:
+            await ctx.send('there was an error processing your request!')

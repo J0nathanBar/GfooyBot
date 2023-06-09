@@ -93,20 +93,38 @@ class BongoMongo:
         else:
             return 'I have been summoned'
 
-    def get_nickname(self, user):
+    @staticmethod
+    def get_nickname(user):
         if user:
             nicknames = user['nicknames']
             return random.choice(nicknames)
         return ''
 
-    def get_reply(self, user):
+    @staticmethod
+    def get_reply(user):
         if user:
             replies = user['replies']
             return random.choice(replies)
         return ''
 
-    def get_reason(self, user):
+    @staticmethod
+    def get_reason(user):
         if user:
             reasons = user['reasons']
             return random.choice(reasons)
         return ''
+
+    def get_triggers(self):
+        collection = self.db['triggers']
+        return collection.distinct('trigger')
+
+    def get_trigger_reply(self, trigger):
+        collection = self.db['triggers']
+        return collection.find_one({'trigger': trigger})['reply']
+
+    def add_trigger(self, trigger: str, reply: str):
+        collection = self.db['triggers']
+        document = {'trigger': trigger.upper(),
+                    'reply': reply}
+        res = collection.insert_one(document)
+        return res.acknowledged

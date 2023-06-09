@@ -4,6 +4,7 @@ from mongobongo import BongoMongo
 import inspect
 import DawnFrager
 
+
 start_bot()
 
 
@@ -17,3 +18,6 @@ def inject_fragers():
             fragers.append(i)
     for frager in fragers:
         mongo.add_user(frager)
+
+
+
