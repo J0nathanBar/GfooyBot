@@ -162,22 +162,40 @@ async def new_user_replies(ctx):
 
 
 @bot.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     if message.author == bot.user:
         return
-    uppered = message.content.upper()
+    mentioned_users = message.mentions
+    for user in mentioned_users:
+        if str(user.id) == '411532993421770752':
+            await was_mentioned(message, user)
+    upper = message.content.upper()
     if bot.user.mentioned_in(message):
         await on_mentioned(message)
-    elif subs(uppered, 'E'):
-        await message.channel.send(uppered + 'E')
-    elif 'EGG' in uppered:
+    if subs(upper, 'E'):
+        await message.channel.send(upper + 'E')
+    if 'EGG' in upper:
         await message.channel.send('I like eggy weggy')
-    if 'WOMEN' in uppered and 'RIGHT' in uppered and not is_substring_between(uppered, 'WOMEN', 'RIGHT', 'NO'):
+    if 'WOMEN' in upper and 'RIGHT' in upper and not is_substring_between(upper, 'WOMEN', 'RIGHT', 'NO'):
         await message.channel.send(
             'it seems you have mentioned women\'s rights without a no in the middle. it seems like a mistake',
             reference=message)
-    if 'HELLO THERE' in uppered:
+    if 'HELLO THERE' in upper:
         await message.channel.send('General Kenobi', reference=message)
+    if 'BUT' in upper:
+        await message.channel.send('he he you said butt', reference=message)
+    if 'COME' in upper:
+        await message.channel.send('he he cum', reference=message)
+    if 'MAYO' in upper:
+        await message.channel.send(
+            "Mayonnaise, the nectar of the gods\nA condiment that's always in high nods\nSmooth and creamy, "
+            "it makes any dish divine\nWith a hint of acidity, it's one of a kind\n\nMayo, Mayo, spread it on "
+            "thick\nA perfect balance, it's the secret trick\nIn a sandwich, salad or fry\nMayo, Mayo, "
+            "we can't deny\n\nEggs and mayo, a match made in heaven\nA classic combo, always in fashion\nTuna salad, "
+            "potato salad, coleslaw too\nMayo is a staple, it's plain to see it's true\n\nMayo, Mayo, spread it on "
+            "thick\nA perfect balance, it's the secret trick\nIn a sandwich, salad or fry\nMayo, Mayo, "
+            "we can't deny\n\nMayo, the king of condiments, no lie\nBringing together, flavors high\nIn every "
+            "kitchen, it's a must\nMayo, Mayo, the nectar of the gods, it's a trust.", reference=message)
     await bot.process_commands(message)
 
 
@@ -258,7 +276,7 @@ async def hello(interaction: discord.Interaction):
     await interaction.response.send_message('hello there!')
 
 
-@bot.command(hidden=True)
+@bot.command(hidden=True, help='gets the ip')
 async def get_ip(ctx):
     ip_name = socket.gethostname()
     ip_addr = socket.gethostbyaddr(ip_name)
@@ -272,3 +290,12 @@ async def add_wisdom(ctx, wisdom):
             await ctx.send('Wisdom added successfully!')
         else:
             ctx.reply('something went wrong')
+
+
+async def was_mentioned(message, user):
+    if user.status == discord.Status.offline:
+        gfooy = mongo.get_user(user.id)
+        nickname = mongo.get_nickname(gfooy)
+        reason = mongo.get_reason(gfooy)
+        await message.channel.send(f'{nickname} is {reason} and thus is unavailable',
+                                   reference=message)

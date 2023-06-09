@@ -104,3 +104,9 @@ class BongoMongo:
             replies = user['replies']
             return random.choice(replies)
         return ''
+
+    def get_reason(self, user):
+        if user:
+            reasons = user['reasons']
+            return random.choice(reasons)
+        return ''
