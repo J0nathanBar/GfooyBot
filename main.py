@@ -1,23 +1,10 @@
 from GfooyBot import start_bot
 from mongobongo import BongoMongo
-from pymongo import MongoClient
 
 import inspect
 import DawnFrager
-from abc import ABC, abstractmethod
-
-
-
 
 start_bot()
-#
-# client = MongoClient('mongodb+srv://bot:botpass@gfooybot.mneifac.mongodb.net/')
-# db = client['gfooy_dis']
-# collection = db['users']
-#
-# collection.create_index("uid", unique=True)
-
-#
 
 
 def inject_fragers():

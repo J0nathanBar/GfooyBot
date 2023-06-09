@@ -186,6 +186,8 @@ async def on_message(message: discord.Message):
         await message.channel.send('he he you said butt', reference=message)
     if 'COME' in upper:
         await message.channel.send('he he cum', reference=message)
+    if 'FREE PALESTINE' in upper:
+        await message.channel.send('if palestine is free i\'ll take 2', reference=message)
     if 'MAYO' in upper:
         await message.channel.send(
             "Mayonnaise, the nectar of the gods\nA condiment that's always in high nods\nSmooth and creamy, "
@@ -196,6 +198,14 @@ async def on_message(message: discord.Message):
             "thick\nA perfect balance, it's the secret trick\nIn a sandwich, salad or fry\nMayo, Mayo, "
             "we can't deny\n\nMayo, the king of condiments, no lie\nBringing together, flavors high\nIn every "
             "kitchen, it's a must\nMayo, Mayo, the nectar of the gods, it's a trust.", reference=message)
+    if 'LIGMA' in upper:
+        await message.channel.send('how bout you ligma balls')
+    if 'CANDICE' in upper:
+        await message.channel.send('candis balls fit in your mouth')
+    if 'KENYA' in upper:
+        await message.channel.send('kenya fit this cock inside your mouth')
+    if 'OUI' in upper:
+        await message.channel.send('bagguette')
     await bot.process_commands(message)
 
 
