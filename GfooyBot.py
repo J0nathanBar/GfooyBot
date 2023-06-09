@@ -11,6 +11,7 @@ mongo = mongobongo.BongoMongo()
 intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
+triggers = []
 
 
 def start_bot():
@@ -34,11 +35,23 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
+    await update_triggers_cache()
     try:
         synced = await bot.tree.sync()
         print(f'synced {len(synced)} commands')
     except Exception as e:
         print(f'Error syncing command: {e}')
+
+
+async def update_triggers_cache():
+    while True:
+        # Update triggers cache with fresh data from the database
+        triggers.clear()
+        triggers.extend(mongo.get_triggers())
+        print("Triggers cache updated")
+
+        # Wait for 1 hour before updating again
+        await asyncio.sleep(3600)
 
 
 @bot.event
@@ -178,7 +191,6 @@ async def on_message(message: discord.Message):
         await message.channel.send(
             'it seems you have mentioned women\'s rights without a no in the middle. it seems like a mistake',
             reference=message)
-    triggers = mongo.get_triggers()
     for trigger in triggers:
         if trigger in upper:
             reply = mongo.get_trigger_reply(trigger)
