@@ -253,7 +253,10 @@ async def display_user(ctx, user):
     embed.add_field(name='id', value=user.get_id())
     embed.add_field(name='group', value=user.get_group())
     embed.add_field(name='nicknames', value=user.get_nicknames())
-    embed.add_field(name='replies', value=user.get_replies())
+    query = {'reasons': {"$exists": True}}
+    if mongo.db['users'].find(query):
+    
+        embed.add_field(name='replies', value=user.get_replies())
     await ctx.send(embed=embed)
 
 
