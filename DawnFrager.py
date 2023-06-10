@@ -4,13 +4,14 @@ import random
 
 # bot
 # botpass
-class User():
-    def __init__(self, _id, replies, nicknames, group, name):
+class User:
+    def __init__(self, _id, replies, nicknames, group, name, reasons):
         self._group = group
         self._id = _id
         self._replies = replies
         self._nicknames = nicknames
         self._name = name
+        self._reasons = reasons
 
     def get_id(self):
         return self._id
@@ -29,6 +30,9 @@ class User():
 
     def get_name(self):
         return self._name
+
+    def get_reasons(self):
+        return self._reasons
 
     def __str__(self) -> str:
         return f'name: {self._name} uid: {self._id} group: {self._group} nicknames: {self._nicknames}  replies:{self._replies}'

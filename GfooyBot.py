@@ -56,7 +56,7 @@ async def send_scheduled_messages():
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
-    print(f'we are currently in the reason update')
+    print(f'we are currently in the fixed reason update')
     # aiocron.crontab('* * * * *', func=send_scheduled_messages, start=True)
     await update_triggers_cache()
 
@@ -160,7 +160,8 @@ async def add_user(ctx):
             group = (await user_input(ctx)).content
             nicknames = await new_user_nicknames(ctx)
             replies = await new_user_replies(ctx)
-            user = DawnFrager.User(_id=new_uid, replies=replies, nicknames=nicknames, group=group, name=name)
+            reasons = await new_user_reasons(ctx)
+            user = DawnFrager.User(_id=new_uid, replies=replies, nicknames=nicknames, group=group, name=name,reasons=reasons)
             while True:
                 await display_user(ctx, user)
                 res = (await user_input(ctx)).content.upper()
@@ -253,10 +254,8 @@ async def display_user(ctx, user):
     embed.add_field(name='id', value=user.get_id())
     embed.add_field(name='group', value=user.get_group())
     embed.add_field(name='nicknames', value=user.get_nicknames())
-    query = {'reasons': {"$exists": True}}
-    if mongo.db['users'].find(query):
-    
-        embed.add_field(name='replies', value=user.get_replies())
+    embed.add_field(name='replies', value=user.get_replies())
+    embed.add_field(name='reasons', value=user.get_reasons())
     await ctx.send(embed=embed)
 
 
@@ -294,6 +293,17 @@ async def user_display(ctx, user):
 async def permission_denied(ctx):
     nickname = mongo.get_nickname(mongo.get_user(ctx.author.id))
     await ctx.reply(f'{nickname} wtf are you trying to do??? permission denied bitch')
+
+
+async def new_user_reasons(ctx):
+    reasons = ['']
+    while True:
+        await ctx.send('enter reasons, input stop to stop, use "" if necessary')
+        reason = await user_input(ctx)
+        if 'STOP' in reason.content.upper():
+            break
+        reasons.append(reason.content)
+    return reasons
 
 
 @bot.tree.command(name='hello')

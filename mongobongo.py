@@ -35,7 +35,8 @@ class BongoMongo:
                 'nicknames': user.get_nicknames(),
                 'replies': user.get_replies(),
                 'group': user.get_group(),
-                'admin': admin
+                'admin': admin,
+                'reasons': user.get_reasons()
             }
             res = collection.insert_one(doc)
             if res.acknowledged:
@@ -116,7 +117,7 @@ class BongoMongo:
             return random.choice(reasons)
         return ''
 
-    def add_reason(self,uid,reason):
+    def add_reason(self, uid, reason):
         user = self.get_user(uid)
         if user:
             update = {'$push': {'reasons': reason}}
