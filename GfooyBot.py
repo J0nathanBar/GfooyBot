@@ -6,6 +6,8 @@ from BotConf import TOKEN
 import mongobongo
 import DawnFrager
 import socket
+from datetime import datetime, timedelta
+import aiocron
 
 mongo = mongobongo.BongoMongo()
 intents = discord.Intents.all()
@@ -32,10 +34,32 @@ async def on_command_error(ctx, error):
         await ctx.reply(f'Error: {error}')
 
 
+async def send_scheduled_messages():
+    print('seccces')
+    current_time = datetime.now()
+    users_collection = mongo.db['users']
+    users = users_collection.find(
+        {'messages': {'$elemMatch': {'send_time': {'$lt': current_time.isoformat()}, 'sent': False}}})
+    print(users.count())
+    for user in users:
+        print(user['uid'])
+    #     for message in user['messages']:
+    #         send_time = datetime.fromisoformat(message['send_time'])
+    #         if send_time <= current_time:
+    #             target_user = bot.get_user(user['id'])
+    #             target_channel = bot.get_channel(int(message['channel_id']))
+    #             await target_user.send(message['text'], target_channel)
+    #             message['sent'] = True
+    #     users_collection.replace_one({'id': user['id']}, user)
+
+
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
+    print(f'we are currently in the reason update')
+    # aiocron.crontab('* * * * *', func=send_scheduled_messages, start=True)
     await update_triggers_cache()
+
     try:
         synced = await bot.tree.sync()
         print(f'synced {len(synced)} commands')
@@ -49,7 +73,6 @@ async def update_triggers_cache():
         triggers.clear()
         triggers.extend(mongo.get_triggers())
         print("Triggers cache updated")
-
         # Wait for 1 hour before updating again
         await asyncio.sleep(3600)
 
@@ -180,8 +203,7 @@ async def on_message(message: discord.Message):
         return
     mentioned_users = message.mentions
     for user in mentioned_users:
-        if str(user.id) == '411532993421770752':
-            await was_mentioned(message, user)
+        await was_mentioned(message, user)
     upper = message.content.upper()
     if bot.user.mentioned_in(message):
         await on_mentioned(message)
@@ -262,6 +284,7 @@ async def user_display(ctx, user):
     embed.add_field(name='group', value=user['group'])
     embed.add_field(name='nicknames', value=user['nicknames'])
     embed.add_field(name='replies', value=user['replies'])
+    embed.add_field(name='reason', value=user['reasons'])
     await ctx.send(embed=embed)
 
 
@@ -273,6 +296,12 @@ async def permission_denied(ctx):
 @bot.tree.command(name='hello')
 async def hello(interaction: discord.Interaction):
     await interaction.response.send_message('hello there!')
+
+
+@bot.command()
+async def echo(ctx: commands.Context):
+    print(ctx.message.content)
+    await ctx.send(f'{ctx.message.content} eee')
 
 
 @bot.command(hidden=True, help='gets the ip')
@@ -293,9 +322,12 @@ async def add_wisdom(ctx, wisdom):
 
 async def was_mentioned(message, user):
     if user.status == discord.Status.offline:
-        gfooy = mongo.get_user(user.id)
-        nickname = mongo.get_nickname(gfooy)
-        reason = mongo.get_reason(gfooy)
+        mong_usr = mongo.get_user(user.id)
+        reason = mongo.get_reason(mong_usr)
+        if reason == '':
+            print(f'no reason found')
+            return
+        nickname = mongo.get_nickname(mong_usr)
         await message.channel.send(f'{nickname} is {reason} and thus is unavailable',
                                    reference=message)
 
@@ -305,5 +337,29 @@ async def add_trigger(ctx, trigger: str, reply: str):
     if await admin_command(ctx):
         if mongo.add_trigger(trigger=trigger, reply=reply):
             await ctx.send('added trigger successfully!')
+        else:
+            await ctx.send('there was an error processing your request!')
+
+
+@bot.command()
+async def schedule_message(ctx, user_id, message_text, channel_id, date, time):
+    send_time_input = f"{date} {time}"
+    try:
+        send_time = datetime.fromisoformat(send_time_input)
+    except ValueError:
+        await ctx.send("Invalid format. Please use the format YYYY-MM-DD HH:MM for date and time.")
+        return
+
+    if mongo.add_message(user_id, message_text, channel_id, send_time):
+        await ctx.send(f"Message scheduled for user {user_id} at {send_time}.")
+    else:
+        await ctx.send('something went wrong')
+
+
+@bot.command(help='adds a reason for being offline\n use by !add_reason [uid] [reason]')
+async def add_reason(ctx, uid, reason):
+    if await admin_command(ctx):
+        if mongo.add_reason(uid=uid, reason=reason):
+            await ctx.send('added reason successfully!')
         else:
             await ctx.send('there was an error processing your request!')

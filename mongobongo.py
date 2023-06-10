@@ -1,12 +1,14 @@
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 import random
+from BotConf import MONGO_LINK
+from datetime import datetime, timedelta
 
 
 class BongoMongo:
     def __init__(self) -> None:
         super().__init__()
-        self.client = MongoClient('mongodb+srv://bot:botpass@gfooybot.mneifac.mongodb.net/')
+        self.client = MongoClient(MONGO_LINK)
         self.db = self.client['gfooy_dis']
 
     def get_wisdom(self):
@@ -114,6 +116,17 @@ class BongoMongo:
             return random.choice(reasons)
         return ''
 
+    def add_reason(self,uid,reason):
+        user = self.get_user(uid)
+        if user:
+            update = {'$push': {'reasons': reason}}
+            _filter = {'uid': uid}
+            collection = self.db['users']
+            res = collection.update_one(_filter, update)
+            return res.matched_count > 0
+        else:
+            return False
+
     def get_triggers(self):
         collection = self.db['triggers']
         return collection.distinct('trigger')
@@ -128,3 +141,22 @@ class BongoMongo:
                     'reply': reply}
         res = collection.insert_one(document)
         return res.acknowledged
+
+    def add_message(self, uid, message_text, channel_id, send_time):
+        user = self.get_user(uid)
+        collection = self.db['users']
+        if user:
+            message = {
+                'text': message_text,
+                'channel_id': channel_id,
+                'send_time': send_time,
+                'sent': False
+            }
+            res = collection.update_one(
+                {'uid': uid},
+                {'$push': {'messages': message}}
+            )
+
+            return res.matched_count > 0
+        else:
+            return False
